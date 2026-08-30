@@ -69,14 +69,23 @@ async function sendNotificationEmail(to: string, enquiry: {
 }) {
   const nodemailer = require('nodemailer')
 
-  // Use configured SMTP or fallback to console log
-  const smtpHost = process.env.SMTP_HOST
-  const smtpPort = process.env.SMTP_PORT
-  const smtpUser = process.env.SMTP_USER
-  const smtpPass = process.env.SMTP_PASS
+  // Read SMTP settings from DB
+  const { createClient } = require('@supabase/supabase-js')
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+  const { data: settings } = await supabase.from('settings').select('key, value')
+  const s: Record<string, string> = {}
+  settings?.forEach((row: any) => { s[row.key] = row.value })
 
-  if (!smtpHost) {
-    // No SMTP configured — log the enquiry to console
+  const smtpHost = s.smtp_host
+  const smtpPort = s.smtp_port
+  const smtpUser = s.smtp_user
+  const smtpPass = s.smtp_pass
+  const fromName = s.smtp_from_name || 'Tourister'
+
+  if (!smtpHost || !smtpUser || !smtpPass) {
     console.log('\n========================================')
     console.log('NEW ENQUIRY NOTIFICATION')
     console.log('========================================')
@@ -156,7 +165,7 @@ async function sendNotificationEmail(to: string, enquiry: {
   `
 
   await transporter.sendMail({
-    from: `"Tourister" <${smtpUser || 'noreply@tourister.com'}>`,
+    from: `"${fromName}" <${smtpUser}>`,
     to,
     subject: `New Enquiry from ${enquiry.name}${enquiry.package_name ? ` — ${enquiry.package_name}` : ''}`,
     html,
