@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getSettings, updateSettings } from '@/app/actions/settings'
-import { Settings, Mail, Save, Loader2, Check, Bell, Globe, Server, Send, TestTube } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { Settings, Mail, Save, Loader2, Check, Bell, Globe, Server, TestTube } from 'lucide-react'
 
 export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(false)
@@ -24,20 +24,25 @@ export default function AdminSettingsPage() {
   })
 
   useEffect(() => {
-    getSettings().then((s) => {
-      setSettings(prev => ({
-        ...prev,
-        notification_email: s.notification_email || '',
-        notification_enabled: s.notification_enabled || 'true',
-        company_name: s.company_name || 'Tourister',
-        company_email: s.company_email || '',
-        company_phone: s.company_phone || '',
-        smtp_host: s.smtp_host || '',
-        smtp_port: s.smtp_port || '587',
-        smtp_user: s.smtp_user || '',
-        smtp_pass: s.smtp_pass || '',
-        smtp_from_name: s.smtp_from_name || 'Tourister',
-      }))
+    const supabase = createClient()
+    supabase.from('settings').select('key, value').then(({ data }) => {
+      if (data) {
+        const s: Record<string, string> = {}
+        data.forEach((row) => { s[row.key] = row.value })
+        setSettings(prev => ({
+          ...prev,
+          notification_email: s.notification_email || '',
+          notification_enabled: s.notification_enabled || 'true',
+          company_name: s.company_name || 'Tourister',
+          company_email: s.company_email || '',
+          company_phone: s.company_phone || '',
+          smtp_host: s.smtp_host || '',
+          smtp_port: s.smtp_port || '587',
+          smtp_user: s.smtp_user || '',
+          smtp_pass: s.smtp_pass || '',
+          smtp_from_name: s.smtp_from_name || 'Tourister',
+        }))
+      }
       setFetching(false)
     })
   }, [])
@@ -46,7 +51,12 @@ export default function AdminSettingsPage() {
     setLoading(true)
     setSaved(false)
     try {
-      await updateSettings(settings)
+      const supabase = createClient()
+      for (const [key, value] of Object.entries(settings)) {
+        await supabase
+          .from('settings')
+          .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' })
+      }
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
     } catch (err) {
@@ -63,7 +73,12 @@ export default function AdminSettingsPage() {
     }
     setTesting(true)
     try {
-      await updateSettings(settings)
+      const supabase = createClient()
+      for (const [key, value] of Object.entries(settings)) {
+        await supabase
+          .from('settings')
+          .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' })
+      }
       const res = await fetch('/api/test-email', { method: 'POST' })
       const data = await res.json()
       if (data.success) {
@@ -223,25 +238,13 @@ export default function AdminSettingsPage() {
             />
           </div>
 
-          {/* SMTP Provider Quick Fill */}
           <div className="bg-slate-50 rounded-lg p-4">
             <p className="text-xs font-medium text-slate-600 mb-2">Quick fill for popular providers:</p>
             <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => { update('smtp_host', 'smtp.gmail.com'); update('smtp_port', '587') }} className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors">
-                Gmail
-              </button>
-              <button type="button" onClick={() => { update('smtp_host', 'smtp.office365.com'); update('smtp_port', '587') }} className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors">
-                Outlook
-              </button>
-              <button type="button" onClick={() => { update('smtp_host', 'smtp.zoho.com'); update('smtp_port', '587') }} className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors">
-                Zoho
-              </button>
-              <button type="button" onClick={() => { update('smtp_host', 'smtp.hostinger.com'); update('smtp_port', '465') }} className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors">
-                Hostinger
-              </button>
-              <button type="button" onClick={() => { update('smtp_host', 'smtp.gmail.com'); update('smtp_port', '465') }} className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors">
-                Gmail (SSL)
-              </button>
+              <button type="button" onClick={() => { update('smtp_host', 'smtp.gmail.com'); update('smtp_port', '587') }} className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors">Gmail</button>
+              <button type="button" onClick={() => { update('smtp_host', 'smtp.office365.com'); update('smtp_port', '587') }} className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors">Outlook</button>
+              <button type="button" onClick={() => { update('smtp_host', 'smtp.zoho.com'); update('smtp_port', '587') }} className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors">Zoho</button>
+              <button type="button" onClick={() => { update('smtp_host', 'smtp.hostinger.com'); update('smtp_port', '465') }} className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors">Hostinger</button>
             </div>
           </div>
 
