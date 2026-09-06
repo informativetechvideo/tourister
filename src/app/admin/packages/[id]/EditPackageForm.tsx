@@ -18,7 +18,7 @@ export function EditPackageForm({ id }: { id: string }) {
     const supabase = createClient()
     Promise.all([
       supabase.from('packages').select('*').eq('id', id).single(),
-      supabase.from('categories').select('id, name').eq('is_active', true).order('name'),
+      supabase.from('categories').select('id, name').eq('is_active', true).order('sort_order', { ascending: true }).order('name', { ascending: true }),
     ]).then(([pkgRes, catRes]) => {
       if (pkgRes.data) setPkg(pkgRes.data as Package)
       if (catRes.data) setCategories(catRes.data)

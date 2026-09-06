@@ -10,7 +10,8 @@ export async function getCategories() {
     .from('categories')
     .select('*')
     .eq('is_active', true)
-    .order('name')
+    .order('sort_order', { ascending: true })
+    .order('name', { ascending: true })
 
   if (error) throw new Error(error.message)
   return data
@@ -21,7 +22,8 @@ export async function getAllCategoriesAdmin() {
   const { data, error } = await supabase
     .from('categories')
     .select('*')
-    .order('name')
+    .order('sort_order', { ascending: true })
+    .order('name', { ascending: true })
 
   if (error) throw new Error(error.message)
   return data

@@ -6,7 +6,7 @@ export default async function PublicLayout({ children }: { children: React.React
 
   const [settingsRes, categoriesRes] = await Promise.all([
     supabase.from('settings').select('key, value'),
-    supabase.from('categories').select('name, slug').eq('is_active', true).order('name'),
+    supabase.from('categories').select('name, slug').eq('is_active', true).order('sort_order', { ascending: true }).order('name', { ascending: true }),
   ])
 
   const s: Record<string, string> = {}

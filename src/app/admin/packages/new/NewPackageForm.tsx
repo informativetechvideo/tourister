@@ -14,7 +14,7 @@ export function NewPackageForm() {
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.from('categories').select('id, name').eq('is_active', true).order('name').then(({ data }) => {
+    supabase.from('categories').select('id, name').eq('is_active', true).order('sort_order', { ascending: true }).order('name', { ascending: true }).then(({ data }) => {
       if (data) setCategories(data)
       setLoading(false)
     })
