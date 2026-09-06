@@ -1,11 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Menu, X, MapPin, Phone } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [companyName, setCompanyName] = useState('Tourister')
+  const [phone, setPhone] = useState('+91 99999 99999')
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.from('settings').select('key, value').then(({ data }) => {
+      if (data) {
+        const s: Record<string, string> = {}
+        data.forEach((row) => { s[row.key] = row.value })
+        if (s.company_name) setCompanyName(s.company_name)
+        if (s.company_phone) setPhone(s.company_phone)
+      }
+    })
+  }, [])
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100">
@@ -17,7 +32,7 @@ export function Navbar() {
               <MapPin className="h-5 w-5 text-white" />
             </div>
             <span className="text-xl font-bold text-slate-900">
-              Tourister
+              {companyName}
             </span>
           </Link>
 
@@ -32,9 +47,9 @@ export function Navbar() {
             <Link href="/enquiry" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
               Enquiry
             </Link>
-            <a href="tel:+919999999999" className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+            <a href={`tel:${phone.replace(/\s/g, '')}`} className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
               <Phone className="h-4 w-4" />
-              +91 99999 99999
+              {phone}
             </a>
             <Link
               href="/enquiry"

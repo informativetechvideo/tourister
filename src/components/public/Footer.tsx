@@ -1,7 +1,28 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { MapPin, Phone, Mail, Globe, Heart, Send } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 export function Footer() {
+  const [companyName, setCompanyName] = useState('Tourister')
+  const [phone, setPhone] = useState('+91 99999 99999')
+  const [email, setEmail] = useState('info@tourister.com')
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.from('settings').select('key, value').then(({ data }) => {
+      if (data) {
+        const s: Record<string, string> = {}
+        data.forEach((row) => { s[row.key] = row.value })
+        if (s.company_name) setCompanyName(s.company_name)
+        if (s.company_phone) setPhone(s.company_phone)
+        if (s.company_email) setEmail(s.company_email)
+      }
+    })
+  }, [])
+
   return (
     <footer className="bg-slate-900 text-slate-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -12,7 +33,7 @@ export function Footer() {
               <div className="h-9 w-9 bg-blue-600 rounded-lg flex items-center justify-center">
                 <MapPin className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-white">Tourister</span>
+              <span className="text-xl font-bold text-white">{companyName}</span>
             </Link>
             <p className="text-sm text-slate-400 leading-relaxed">
               Creating unforgettable travel experiences with handpicked destinations and personalized service.
@@ -35,11 +56,11 @@ export function Footer() {
             <ul className="space-y-3">
               <li className="flex items-center gap-2 text-sm">
                 <Phone className="h-4 w-4 text-blue-400" />
-                +91 99999 99999
+                {phone}
               </li>
               <li className="flex items-center gap-2 text-sm">
                 <Mail className="h-4 w-4 text-blue-400" />
-                info@tourister.com
+                {email}
               </li>
             </ul>
           </div>
@@ -62,7 +83,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-slate-800 mt-10 pt-6 text-center text-sm text-slate-500">
-          &copy; {new Date().getFullYear()} Tourister. All rights reserved.
+          &copy; {new Date().getFullYear()} {companyName}. All rights reserved.
         </div>
       </div>
     </footer>

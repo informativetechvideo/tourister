@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { SearchAutocomplete } from './SearchAutocomplete'
+import { createClient } from '@/lib/supabase/client'
 
 const slides = [
   {
@@ -35,6 +36,19 @@ const slides = [
 export function HeroCarousel() {
   const [current, setCurrent] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
+  const [categories, setCategories] = useState<{ name: string; slug: string }[]>([])
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase
+      .from('categories')
+      .select('name, slug')
+      .eq('is_active', true)
+      .order('name')
+      .then(({ data }) => {
+        if (data) setCategories(data)
+      })
+  }, [])
 
   const next = useCallback(() => setCurrent((c) => (c + 1) % slides.length), [])
   const prev = useCallback(() => setCurrent((c) => (c - 1 + slides.length) % slides.length), [])
@@ -104,14 +118,19 @@ export function HeroCarousel() {
           </div>
 
           {/* Quick links */}
-          <div className="flex gap-3 mt-6 animate-fade-in-up">
-            {['Kerala', 'Ladakh', 'Rajasthan', 'Goa'].map((dest) => (
+          <div className="flex gap-3 mt-6 animate-fade-in-up flex-wrap">
+            {(categories.length > 0 ? categories : [
+              { name: 'Kerala', slug: 'kerala' },
+              { name: 'Ladakh', slug: 'ladakh' },
+              { name: 'Rajasthan', slug: 'rajasthan' },
+              { name: 'Goa', slug: 'goa' },
+            ]).map((cat) => (
               <Link
-                key={dest}
-                href={`/packages?q=${dest}`}
+                key={cat.slug}
+                href={`/category/${cat.slug}`}
                 className="px-4 py-1.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-xs sm:text-sm text-white hover:bg-white/20 transition-colors"
               >
-                {dest}
+                {cat.name}
               </Link>
             ))}
           </div>
