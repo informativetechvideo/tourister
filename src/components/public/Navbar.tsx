@@ -1,26 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { Menu, X, MapPin, Phone } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { useSiteSettings } from './SiteSettingsProvider'
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [companyName, setCompanyName] = useState('Tourister')
-  const [phone, setPhone] = useState('+91 99999 99999')
-
-  useEffect(() => {
-    const supabase = createClient()
-    supabase.from('settings').select('key, value').then(({ data }) => {
-      if (data) {
-        const s: Record<string, string> = {}
-        data.forEach((row) => { s[row.key] = row.value })
-        if (s.company_name) setCompanyName(s.company_name)
-        if (s.company_phone) setPhone(s.company_phone)
-      }
-    })
-  }, [])
+  const { company_name, company_phone } = useSiteSettings()
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100">
@@ -32,7 +19,7 @@ export function Navbar() {
               <MapPin className="h-5 w-5 text-white" />
             </div>
             <span className="text-xl font-bold text-slate-900">
-              {companyName}
+              {company_name}
             </span>
           </Link>
 
@@ -47,9 +34,9 @@ export function Navbar() {
             <Link href="/enquiry" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
               Enquiry
             </Link>
-            <a href={`tel:${phone.replace(/\s/g, '')}`} className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+            <a href={`tel:${company_phone.replace(/\s/g, '')}`} className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
               <Phone className="h-4 w-4" />
-              {phone}
+              {company_phone}
             </a>
             <Link
               href="/enquiry"
