@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { updateEnquiryStatus, deleteEnquiry } from '@/app/actions/enquiries'
 import { formatDate } from '@/lib/utils'
-import { Trash2, ExternalLink, Mail, Phone, User, Calendar, Users } from 'lucide-react'
+import { Trash2, ExternalLink, Mail, Phone, User, Calendar, Users, Loader2 } from 'lucide-react'
 import type { Enquiry } from '@/types/database'
 
 interface EnquiryTableProps {
   enquiries: Enquiry[]
+  onDelete?: () => void
 }
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'success' | 'warning' | 'danger' | 'info' }> = {
@@ -20,9 +21,10 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'succes
   closed: { label: 'Closed', variant: 'default' },
 }
 
-export function EnquiryTable({ enquiries }: EnquiryTableProps) {
+export function EnquiryTable({ enquiries, onDelete }: EnquiryTableProps) {
   const [selectedEnquiry, setSelectedEnquiry] = useState<Enquiry | null>(null)
   const [loading, setLoading] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const handleStatusChange = async (id: string, status: string) => {
     setLoading(true)
@@ -35,8 +37,11 @@ export function EnquiryTable({ enquiries }: EnquiryTableProps) {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this enquiry?')) return
+    setDeletingId(id)
     await deleteEnquiry(id)
     setSelectedEnquiry(null)
+    setDeletingId(null)
+    if (onDelete) onDelete()
   }
 
   return (
@@ -91,8 +96,12 @@ export function EnquiryTable({ enquiries }: EnquiryTableProps) {
                 <button onClick={() => setSelectedEnquiry(enq)} className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
                   <ExternalLink className="h-4 w-4" />
                 </button>
-                <button onClick={() => handleDelete(enq.id)} className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors">
-                  <Trash2 className="h-4 w-4" />
+                <button
+                  onClick={() => handleDelete(enq.id)}
+                  disabled={deletingId === enq.id}
+                  className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                >
+                  {deletingId === enq.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                 </button>
               </div>
             </div>
@@ -146,8 +155,12 @@ export function EnquiryTable({ enquiries }: EnquiryTableProps) {
                       <button onClick={() => setSelectedEnquiry(enq)} className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
                         <ExternalLink className="h-4 w-4" />
                       </button>
-                      <button onClick={() => handleDelete(enq.id)} className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors">
-                        <Trash2 className="h-4 w-4" />
+                      <button
+                        onClick={() => handleDelete(enq.id)}
+                        disabled={deletingId === enq.id}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                      >
+                        {deletingId === enq.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                       </button>
                     </div>
                   </td>
@@ -211,7 +224,12 @@ export function EnquiryTable({ enquiries }: EnquiryTableProps) {
               </div>
             )}
             <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
-              <Button variant="danger" size="sm" onClick={() => handleDelete(selectedEnquiry.id)}>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => handleDelete(selectedEnquiry.id)}
+                loading={deletingId === selectedEnquiry.id}
+              >
                 <Trash2 className="h-4 w-4 mr-1" /> Delete
               </Button>
             </div>

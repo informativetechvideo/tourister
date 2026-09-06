@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, MessageSquare, FolderTree, LogOut, X, Settings } from 'lucide-react'
+import { LayoutDashboard, Package, MessageSquare, FolderTree, LogOut, X, Settings, Loader2 } from 'lucide-react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -22,8 +23,10 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const [loggingOut, setLoggingOut] = useState(false)
 
   const handleLogout = async () => {
+    setLoggingOut(true)
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/admin/login')
@@ -91,10 +94,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="px-3 py-4 border-t border-slate-800">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors w-full"
+            disabled={loggingOut}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors w-full disabled:opacity-50"
           >
-            <LogOut className="h-5 w-5" />
-            Logout
+            {loggingOut ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogOut className="h-5 w-5" />}
+            {loggingOut ? 'Logging out...' : 'Logout'}
           </button>
         </div>
       </aside>

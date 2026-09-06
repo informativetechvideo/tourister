@@ -10,29 +10,28 @@ export function EnquiriesList() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    const fetchEnquiries = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        setError('Not authenticated')
-        setLoading(false)
-        return
-      }
-      const { data, error } = await supabase
-        .from('enquiries')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        setError(error.message)
-      } else {
-        setEnquiries(data || [])
-      }
+  const fetchEnquiries = async () => {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setError('Not authenticated')
       setLoading(false)
+      return
     }
-    fetchEnquiries()
-  }, [])
+    const { data, error } = await supabase
+      .from('enquiries')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      setError(error.message)
+    } else {
+      setEnquiries(data || [])
+    }
+    setLoading(false)
+  }
+
+  useEffect(() => { fetchEnquiries() }, [])
 
   if (loading) {
     return (
@@ -56,7 +55,7 @@ export function EnquiriesList() {
         <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Enquiries</h1>
         <p className="text-slate-500 text-sm mt-1">{enquiries.length} total enquiries</p>
       </div>
-      <EnquiryTable enquiries={enquiries} />
+      <EnquiryTable enquiries={enquiries} onDelete={fetchEnquiries} />
     </div>
   )
 }

@@ -19,6 +19,9 @@ export function AdminCategoriesContent() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [savingId, setSavingId] = useState<string | null>(null)
+  const [togglingId, setTogglingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [editId, setEditId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editDesc, setEditDesc] = useState('')
@@ -58,6 +61,7 @@ export function AdminCategoriesContent() {
 
   const handleUpdate = async (id: string) => {
     if (!editName.trim()) return
+    setSavingId(id)
     const { error } = await supabase.from('categories').update({
       name: editName.trim(),
       slug: slugify(editName.trim()),
@@ -67,16 +71,21 @@ export function AdminCategoriesContent() {
       setEditId(null)
       fetchCategories()
     }
+    setSavingId(null)
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this category?')) return
+    setDeletingId(id)
     await supabase.from('categories').delete().eq('id', id)
+    setDeletingId(null)
     fetchCategories()
   }
 
   const handleToggleActive = async (id: string, currentActive: boolean) => {
+    setTogglingId(id)
     await supabase.from('categories').update({ is_active: !currentActive }).eq('id', id)
+    setTogglingId(null)
     fetchCategories()
   }
 
@@ -163,8 +172,12 @@ export function AdminCategoriesContent() {
                           className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                         <div className="flex gap-1">
-                          <button onClick={() => handleUpdate(cat.id)} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg">
-                            <Check className="h-4 w-4" />
+                          <button
+                            onClick={() => handleUpdate(cat.id)}
+                            disabled={savingId === cat.id}
+                            className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg disabled:opacity-50"
+                          >
+                            {savingId === cat.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                           </button>
                           <button onClick={() => setEditId(null)} className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg">
                             <X className="h-4 w-4" />
@@ -187,10 +200,11 @@ export function AdminCategoriesContent() {
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <button
                             onClick={() => handleToggleActive(cat.id, cat.is_active)}
-                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            disabled={togglingId === cat.id}
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
                             title={cat.is_active ? 'Deactivate' : 'Activate'}
                           >
-                            {cat.is_active ? <ToggleRight className="h-5 w-5 text-green-600" /> : <ToggleLeft className="h-5 w-5" />}
+                            {togglingId === cat.id ? <Loader2 className="h-5 w-5 animate-spin" /> : cat.is_active ? <ToggleRight className="h-5 w-5 text-green-600" /> : <ToggleLeft className="h-5 w-5" />}
                           </button>
                           <button
                             onClick={() => { setEditId(cat.id); setEditName(cat.name); setEditDesc(cat.description || '') }}
@@ -200,9 +214,10 @@ export function AdminCategoriesContent() {
                           </button>
                           <button
                             onClick={() => handleDelete(cat.id)}
-                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            disabled={deletingId === cat.id}
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            {deletingId === cat.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                           </button>
                         </div>
                       </>
