@@ -1,17 +1,18 @@
 'use client'
 
 import Link from 'next/link'
-import { MapPin, Phone, Mail, Globe, Heart, Send, Instagram, Facebook, Twitter, Youtube } from 'lucide-react'
+import { MapPin, Phone, Mail, Globe, Heart, Send, MessageCircle, Share2, Rss } from 'lucide-react'
 import { useSiteSettings } from './SiteSettingsProvider'
 
 const socialIcons: Record<string, typeof Globe> = {
-  facebook: Facebook,
-  instagram: Instagram,
-  twitter: Twitter,
-  youtube: Youtube,
+  facebook: Globe,
+  instagram: Heart,
+  twitter: MessageCircle,
+  youtube: Rss,
   globe: Globe,
   heart: Heart,
   send: Send,
+  share: Share2,
 }
 
 export function Footer() {
