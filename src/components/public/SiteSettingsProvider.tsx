@@ -3,12 +3,19 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+interface SocialLink {
+  label: string
+  url: string
+  icon: string
+}
+
 interface SiteSettings {
   company_name: string
   company_phone: string
   company_email: string
   theme_color: string
   logo_url: string
+  social_links: SocialLink[]
   categories: { name: string; slug: string }[]
 }
 
@@ -18,6 +25,7 @@ const SettingsContext = createContext<SiteSettings>({
   company_email: 'info@tourister.com',
   theme_color: '#2563eb',
   logo_url: '',
+  social_links: [],
   categories: [],
 })
 
@@ -50,6 +58,13 @@ function hexToRGB(hex: string): string {
   return `${parseInt(result[1], 16)} ${parseInt(result[2], 16)} ${parseInt(result[3], 16)}`
 }
 
+const defaultSocialLinks: SocialLink[] = [
+  { label: 'Facebook', url: '', icon: 'facebook' },
+  { label: 'Instagram', url: '', icon: 'instagram' },
+  { label: 'Twitter', url: '', icon: 'twitter' },
+  { label: 'YouTube', url: '', icon: 'youtube' },
+]
+
 export function SiteSettingsProvider({ children, initial }: { children: ReactNode; initial: SiteSettings }) {
   const [settings, setSettings] = useState<SiteSettings>(initial)
 
@@ -66,6 +81,10 @@ export function SiteSettingsProvider({ children, initial }: { children: ReactNod
       if (data) {
         const s: Record<string, string> = {}
         data.forEach((row) => { s[row.key] = row.value })
+        let socialLinks = initial.social_links
+        if (s.social_links) {
+          try { socialLinks = JSON.parse(s.social_links) } catch {}
+        }
         setSettings(prev => ({
           ...prev,
           company_name: s.company_name || prev.company_name,
@@ -73,6 +92,7 @@ export function SiteSettingsProvider({ children, initial }: { children: ReactNod
           company_email: s.company_email || prev.company_email,
           theme_color: s.theme_color || prev.theme_color,
           logo_url: s.logo_url || prev.logo_url,
+          social_links: socialLinks,
         }))
       }
     })

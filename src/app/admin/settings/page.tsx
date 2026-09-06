@@ -2,7 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Settings, Mail, Save, Loader2, Check, Bell, Globe, Server, TestTube, Palette, Upload, X, MapPin } from 'lucide-react'
+import { Settings, Mail, Save, Loader2, Check, Bell, Globe, Server, TestTube, Palette, Upload, X, MapPin, Link2, Plus, Trash2 } from 'lucide-react'
+
+interface SocialLink {
+  label: string
+  url: string
+  icon: string
+}
 
 export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(false)
@@ -24,6 +30,12 @@ export default function AdminSettingsPage() {
     theme_color: '#2563eb',
     logo_url: '',
   })
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([
+    { label: 'Facebook', url: '', icon: 'facebook' },
+    { label: 'Instagram', url: '', icon: 'instagram' },
+    { label: 'Twitter', url: '', icon: 'twitter' },
+    { label: 'YouTube', url: '', icon: 'youtube' },
+  ])
   const [uploadingLogo, setUploadingLogo] = useState(false)
 
   useEffect(() => {
@@ -47,6 +59,9 @@ export default function AdminSettingsPage() {
           theme_color: s.theme_color || '#2563eb',
           logo_url: s.logo_url || '',
         }))
+        if (s.social_links) {
+          try { setSocialLinks(JSON.parse(s.social_links)) } catch {}
+        }
       }
       setFetching(false)
     })
@@ -62,6 +77,9 @@ export default function AdminSettingsPage() {
           .from('settings')
           .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' })
       }
+      await supabase
+        .from('settings')
+        .upsert({ key: 'social_links', value: JSON.stringify(socialLinks), updated_at: new Date().toISOString() }, { onConflict: 'key' })
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
     } catch (err) {
@@ -392,6 +410,36 @@ export default function AdminSettingsPage() {
             {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <TestTube className="h-4 w-4" />}
             {testing ? 'Sending test...' : 'Send Test Email'}
           </button>
+        </div>
+      </div>
+
+      {/* Social Links */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6">
+        <h2 className="font-semibold text-slate-900 flex items-center gap-2 mb-4">
+          <Link2 className="h-5 w-5 text-blue-500" />
+          Social Media Links
+        </h2>
+        <p className="text-sm text-slate-500 mb-6">
+          Add your social media profiles. These will appear in the footer.
+        </p>
+
+        <div className="space-y-3">
+          {socialLinks.map((link, index) => (
+            <div key={index} className="flex items-center gap-3">
+              <span className="text-sm font-medium text-slate-700 w-24 flex-shrink-0">{link.label}</span>
+              <input
+                type="url"
+                value={link.url}
+                onChange={(e) => {
+                  const updated = [...socialLinks]
+                  updated[index] = { ...updated[index], url: e.target.value }
+                  setSocialLinks(updated)
+                }}
+                placeholder={`https://${link.label.toLowerCase()}.com/yourpage`}
+                className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          ))}
         </div>
       </div>
 
