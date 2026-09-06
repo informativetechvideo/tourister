@@ -1,12 +1,23 @@
 'use client'
 
-import { deletePackage } from '@/app/actions/packages'
-import { Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { Trash2, Loader2 } from 'lucide-react'
 
-export function DeletePackageButton({ id }: { id: string }) {
+export function DeletePackageButton({ id, onDelete }: { id: string; onDelete?: () => void }) {
+  const [loading, setLoading] = useState(false)
+
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this package?')) return
-    await deletePackage(id)
+    setLoading(true)
+    const supabase = createClient()
+    await supabase.from('packages').delete().eq('id', id)
+    setLoading(false)
+    if (onDelete) onDelete()
+  }
+
+  if (loading) {
+    return <span className="p-1.5"><Loader2 className="h-4 w-4 animate-spin text-slate-400" /></span>
   }
 
   return (

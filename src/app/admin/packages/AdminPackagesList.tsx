@@ -13,18 +13,17 @@ export function AdminPackagesList() {
   const [packages, setPackages] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const supabase = createClient()
-      const { data } = await supabase
-        .from('packages')
-        .select('*, categories(*)')
-        .order('created_at', { ascending: false })
-      setPackages(data || [])
-      setLoading(false)
-    }
-    fetchData()
-  }, [])
+  const fetchData = async () => {
+    const supabase = createClient()
+    const { data } = await supabase
+      .from('packages')
+      .select('*, categories(*)')
+      .order('created_at', { ascending: false })
+    setPackages(data || [])
+    setLoading(false)
+  }
+
+  useEffect(() => { fetchData() }, [])
 
   if (loading) {
     return (
@@ -66,7 +65,7 @@ export function AdminPackagesList() {
                     {pkg.name}
                     {pkg.featured && <Star className="h-3 w-3 text-amber-500 fill-amber-500 flex-shrink-0" />}
                   </p>
-                  <ToggleActiveButton id={pkg.id} isActive={pkg.is_active} />
+                  <ToggleActiveButton id={pkg.id} isActive={pkg.is_active} onToggle={fetchData} />
                 </div>
                 {pkg.categories && (
                   <p className="text-xs text-blue-600 mt-0.5">{pkg.categories.name}</p>
@@ -95,7 +94,7 @@ export function AdminPackagesList() {
                 <Link href={`/admin/packages/${pkg.id}`} className="p-2 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors">
                   <Pencil className="h-4 w-4" />
                 </Link>
-                <DeletePackageButton id={pkg.id} />
+                <DeletePackageButton id={pkg.id} onDelete={fetchData} />
               </div>
             </div>
           </div>
@@ -151,7 +150,7 @@ export function AdminPackagesList() {
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-600">{pkg.duration_days}D / {pkg.duration_nights || pkg.duration_days - 1}N</td>
                   <td className="px-4 py-3">
-                    <ToggleActiveButton id={pkg.id} isActive={pkg.is_active} />
+                  <ToggleActiveButton id={pkg.id} isActive={pkg.is_active} onToggle={fetchData} />
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-500">{formatDate(pkg.created_at)}</td>
                   <td className="px-4 py-3 text-right">
@@ -162,7 +161,7 @@ export function AdminPackagesList() {
                       <Link href={`/admin/packages/${pkg.id}`} className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors">
                         <Pencil className="h-4 w-4" />
                       </Link>
-                      <DeletePackageButton id={pkg.id} />
+                      <DeletePackageButton id={pkg.id} onDelete={fetchData} />
                     </div>
                   </td>
                 </tr>
