@@ -4,7 +4,9 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { ImageUploader } from './ImageUploader'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, FolderPlus, Loader2, X } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { slugify } from '@/lib/utils'
 import type { Package, ItineraryDay } from '@/types/database'
 
 interface PackageFormProps {
@@ -13,7 +15,7 @@ interface PackageFormProps {
   onSubmit: (formData: FormData) => Promise<void>
 }
 
-export function PackageForm({ pkg, categories, onSubmit }: PackageFormProps) {
+export function PackageForm({ pkg, categories: initialCategories, onSubmit }: PackageFormProps) {
   const [loading, setLoading] = useState(false)
   const [images, setImages] = useState<string[]>(pkg?.images || [])
   const [highlights, setHighlights] = useState<string[]>(pkg?.highlights || [''])
@@ -22,6 +24,33 @@ export function PackageForm({ pkg, categories, onSubmit }: PackageFormProps) {
   const [itinerary, setItinerary] = useState<ItineraryDay[]>(
     pkg?.itinerary || [{ day: 1, title: '', description: '' }]
   )
+  const [categories, setCategories] = useState(initialCategories)
+  const [selectedCategoryId, setSelectedCategoryId] = useState(pkg?.category_id || '')
+  const [showCategoryForm, setShowCategoryForm] = useState(false)
+  const [newCatName, setNewCatName] = useState('')
+  const [newCatDesc, setNewCatDesc] = useState('')
+  const [creatingCategory, setCreatingCategory] = useState(false)
+
+  const handleCreateCategory = async () => {
+    if (!newCatName.trim()) return
+    setCreatingCategory(true)
+    const supabase = createClient()
+    const { data, error } = await supabase.from('categories').insert({
+      name: newCatName.trim(),
+      slug: slugify(newCatName.trim()),
+      description: newCatDesc.trim() || null,
+      is_active: true,
+    }).select('id, name').single()
+
+    if (!error && data) {
+      setCategories([...categories, data])
+      setSelectedCategoryId(data.id)
+      setNewCatName('')
+      setNewCatDesc('')
+      setShowCategoryForm(false)
+    }
+    setCreatingCategory(false)
+  }
 
   const addListItem = (list: string[], setList: (v: string[]) => void) => {
     setList([...list, ''])
@@ -112,12 +141,61 @@ export function PackageForm({ pkg, categories, onSubmit }: PackageFormProps) {
 
           <div className="space-y-1">
             <label className="block text-sm font-medium text-slate-700">Category</label>
-            <select name="category_id" defaultValue={pkg?.category_id || ''} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">Select Category</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
-            </select>
+            <div className="flex gap-2">
+              <select
+                name="category_id"
+                value={selectedCategoryId}
+                onChange={(e) => setSelectedCategoryId(e.target.value)}
+                className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select Category</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setShowCategoryForm(!showCategoryForm)}
+                className="flex items-center gap-1 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm font-medium text-blue-600 hover:bg-blue-100 transition-colors flex-shrink-0"
+                title="Create new category"
+              >
+                <FolderPlus className="h-4 w-4" />
+                <span className="hidden sm:inline">New</span>
+              </button>
+            </div>
+            {showCategoryForm && (
+              <div className="mt-2 p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-slate-600">New Category</p>
+                  <button type="button" onClick={() => setShowCategoryForm(false)} className="text-slate-400 hover:text-slate-600">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                  placeholder="Category name *"
+                  className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                />
+                <input
+                  type="text"
+                  value={newCatDesc}
+                  onChange={(e) => setNewCatDesc(e.target.value)}
+                  placeholder="Description (optional)"
+                  className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                />
+                <button
+                  type="button"
+                  onClick={handleCreateCategory}
+                  disabled={creatingCategory || !newCatName.trim()}
+                  className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                >
+                  {creatingCategory ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                  {creatingCategory ? 'Creating...' : 'Create & Select'}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="space-y-1">
