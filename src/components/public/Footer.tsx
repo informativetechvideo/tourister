@@ -5,7 +5,7 @@ import { MapPin, Phone, Mail, Globe, Heart, Send } from 'lucide-react'
 import { useSiteSettings } from './SiteSettingsProvider'
 
 export function Footer() {
-  const { company_name, company_phone, company_email } = useSiteSettings()
+  const { company_name, company_phone, company_email, theme_color, logo_url } = useSiteSettings()
 
   return (
     <footer className="bg-slate-900 text-slate-300">
@@ -14,9 +14,13 @@ export function Footer() {
           {/* Brand */}
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-2">
-              <div className="h-9 w-9 bg-blue-600 rounded-lg flex items-center justify-center">
-                <MapPin className="h-5 w-5 text-white" />
-              </div>
+              {logo_url ? (
+                <img src={logo_url} alt={company_name} className="h-9 w-auto object-contain" />
+              ) : (
+                <div className="h-9 w-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: theme_color }}>
+                  <MapPin className="h-5 w-5 text-white" />
+                </div>
+              )}
               <span className="text-xl font-bold text-white">{company_name}</span>
             </Link>
             <p className="text-sm text-slate-400 leading-relaxed">
@@ -39,11 +43,11 @@ export function Footer() {
             <h4 className="text-white font-semibold mb-4">Contact Us</h4>
             <ul className="space-y-3">
               <li className="flex items-center gap-2 text-sm">
-                <Phone className="h-4 w-4 text-blue-400" />
+                <Phone className="h-4 w-4" style={{ color: theme_color }} />
                 {company_phone}
               </li>
               <li className="flex items-center gap-2 text-sm">
-                <Mail className="h-4 w-4 text-blue-400" />
+                <Mail className="h-4 w-4" style={{ color: theme_color }} />
                 {company_email}
               </li>
             </ul>
@@ -53,13 +57,13 @@ export function Footer() {
           <div>
             <h4 className="text-white font-semibold mb-4">Follow Us</h4>
             <div className="flex gap-3">
-              <a href="#" className="h-10 w-10 bg-slate-800 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors">
+              <a href="#" className="h-10 w-10 bg-slate-800 rounded-lg flex items-center justify-center hover:opacity-80 transition-colors">
                 <Globe className="h-5 w-5" />
               </a>
-              <a href="#" className="h-10 w-10 bg-slate-800 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors">
+              <a href="#" className="h-10 w-10 bg-slate-800 rounded-lg flex items-center justify-center hover:opacity-80 transition-colors">
                 <Heart className="h-5 w-5" />
               </a>
-              <a href="#" className="h-10 w-10 bg-slate-800 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors">
+              <a href="#" className="h-10 w-10 bg-slate-800 rounded-lg flex items-center justify-center hover:opacity-80 transition-colors">
                 <Send className="h-5 w-5" />
               </a>
             </div>

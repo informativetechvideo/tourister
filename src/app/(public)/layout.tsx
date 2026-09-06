@@ -16,6 +16,8 @@ export default async function PublicLayout({ children }: { children: React.React
     company_name: s.company_name || 'Tourister',
     company_phone: s.company_phone || '+91 99999 99999',
     company_email: s.company_email || 'info@tourister.com',
+    theme_color: s.theme_color || '#2563eb',
+    logo_url: s.logo_url || '',
     categories: categoriesRes.data || [],
   }
 

@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, MessageSquare, FolderTree, LogOut, X, Settings, Loader2 } from 'lucide-react'
-import { useState } from 'react'
+import { LayoutDashboard, Package, MessageSquare, FolderTree, LogOut, X, Settings, Loader2, MapPin } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -24,6 +24,22 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [loggingOut, setLoggingOut] = useState(false)
+  const [themeColor, setThemeColor] = useState('#2563eb')
+  const [logoUrl, setLogoUrl] = useState('')
+  const [companyName, setCompanyName] = useState('Tourister')
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.from('settings').select('key, value').then(({ data }) => {
+      if (data) {
+        const s: Record<string, string> = {}
+        data.forEach((row) => { s[row.key] = row.value })
+        if (s.theme_color) setThemeColor(s.theme_color)
+        if (s.logo_url) setLogoUrl(s.logo_url)
+        if (s.company_name) setCompanyName(s.company_name)
+      }
+    })
+  }, [])
 
   const handleLogout = async () => {
     setLoggingOut(true)
@@ -56,11 +72,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Logo */}
         <div className="px-6 py-5 border-b border-slate-800 flex items-center justify-between">
           <Link href="/admin" className="flex items-center gap-2" onClick={handleNav}>
-            <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Package className="h-4 w-4 text-white" />
-            </div>
-            <span className="text-lg font-bold">Tourister</span>
-            <span className="text-xs bg-blue-600 text-white px-1.5 py-0.5 rounded font-medium ml-auto">Admin</span>
+            {logoUrl ? (
+              <img src={logoUrl} alt={companyName} className="h-8 w-auto object-contain" />
+            ) : (
+              <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: themeColor }}>
+                <MapPin className="h-4 w-4 text-white" />
+              </div>
+            )}
+            <span className="text-lg font-bold">{companyName}</span>
+            <span className="text-xs text-white px-1.5 py-0.5 rounded font-medium ml-auto" style={{ backgroundColor: themeColor }}>Admin</span>
           </Link>
           <button onClick={onClose} className="lg:hidden text-slate-400 hover:text-white p-1">
             <X className="h-5 w-5" />
@@ -79,9 +99,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 onClick={handleNav}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-blue-600 text-white'
+                    ? 'text-white'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800'
                 }`}
+                style={isActive ? { backgroundColor: themeColor } : undefined}
               >
                 <item.icon className="h-5 w-5" />
                 {item.label}

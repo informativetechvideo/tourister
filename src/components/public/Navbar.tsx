@@ -7,7 +7,7 @@ import { useSiteSettings } from './SiteSettingsProvider'
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
-  const { company_name, company_phone } = useSiteSettings()
+  const { company_name, company_phone, theme_color, logo_url } = useSiteSettings()
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100">
@@ -15,9 +15,13 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <div className="h-9 w-9 bg-blue-600 rounded-lg flex items-center justify-center">
-              <MapPin className="h-5 w-5 text-white" />
-            </div>
+            {logo_url ? (
+              <img src={logo_url} alt={company_name} className="h-9 w-auto object-contain" />
+            ) : (
+              <div className="h-9 w-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: theme_color }}>
+                <MapPin className="h-5 w-5 text-white" />
+              </div>
+            )}
             <span className="text-xl font-bold text-slate-900">
               {company_name}
             </span>
@@ -25,22 +29,23 @@ export function Navbar() {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8">
-            <Link href="/" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+            <Link href="/" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
               Home
             </Link>
-            <Link href="/packages" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+            <Link href="/packages" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
               Packages
             </Link>
-            <Link href="/enquiry" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+            <Link href="/enquiry" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
               Enquiry
             </Link>
-            <a href={`tel:${company_phone.replace(/\s/g, '')}`} className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+            <a href={`tel:${company_phone.replace(/\s/g, '')}`} className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
               <Phone className="h-4 w-4" />
               {company_phone}
             </a>
             <Link
               href="/enquiry"
-              className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md"
+              className="text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm hover:shadow-md"
+              style={{ backgroundColor: theme_color }}
             >
               Enquire Now
             </Link>
@@ -69,7 +74,8 @@ export function Navbar() {
             </Link>
             <Link
               href="/enquiry"
-              className="block mx-3 text-center bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium"
+              className="block mx-3 text-center text-white px-5 py-2.5 rounded-lg text-sm font-medium"
+              style={{ backgroundColor: theme_color }}
               onClick={() => setMobileOpen(false)}
             >
               Enquire Now

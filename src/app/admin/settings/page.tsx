@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Settings, Mail, Save, Loader2, Check, Bell, Globe, Server, TestTube } from 'lucide-react'
+import { Settings, Mail, Save, Loader2, Check, Bell, Globe, Server, TestTube, Palette, Upload, X, MapPin } from 'lucide-react'
 
 export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(false)
@@ -21,7 +21,10 @@ export default function AdminSettingsPage() {
     smtp_user: '',
     smtp_pass: '',
     smtp_from_name: 'Tourister',
+    theme_color: '#2563eb',
+    logo_url: '',
   })
+  const [uploadingLogo, setUploadingLogo] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -41,6 +44,8 @@ export default function AdminSettingsPage() {
           smtp_user: s.smtp_user || '',
           smtp_pass: s.smtp_pass || '',
           smtp_from_name: s.smtp_from_name || 'Tourister',
+          theme_color: s.theme_color || '#2563eb',
+          logo_url: s.logo_url || '',
         }))
       }
       setFetching(false)
@@ -95,6 +100,40 @@ export default function AdminSettingsPage() {
 
   const update = (key: string, value: string) => setSettings(s => ({ ...s, [key]: value }))
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingLogo(true)
+    try {
+      const supabase = createClient()
+      const fileExt = file.name.split('.').pop()
+      const fileName = `logo-${Date.now()}.${fileExt}`
+      const { error } = await supabase.storage
+        .from('package-images')
+        .upload(fileName, file, { cacheControl: '3600', upsert: false })
+      if (error) throw error
+      const { data: { publicUrl } } = supabase.storage.from('package-images').getPublicUrl(fileName)
+      update('logo_url', publicUrl)
+    } catch (err) {
+      alert('Failed to upload logo')
+    } finally {
+      setUploadingLogo(false)
+    }
+  }
+
+  const presetColors = [
+    { name: 'Blue', value: '#2563eb' },
+    { name: 'Indigo', value: '#4f46e5' },
+    { name: 'Purple', value: '#7c3aed' },
+    { name: 'Pink', value: '#db2777' },
+    { name: 'Red', value: '#dc2626' },
+    { name: 'Orange', value: '#ea580c' },
+    { name: 'Emerald', value: '#059669' },
+    { name: 'Teal', value: '#0d9488' },
+    { name: 'Cyan', value: '#0891b2' },
+    { name: 'Slate', value: '#475569' },
+  ]
+
   if (fetching) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -111,6 +150,102 @@ export default function AdminSettingsPage() {
           Settings
         </h1>
         <p className="text-slate-500 text-sm mt-1">Configure your site, email, and notifications</p>
+      </div>
+
+      {/* Appearance */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6">
+        <h2 className="font-semibold text-slate-900 flex items-center gap-2 mb-4">
+          <Palette className="h-5 w-5 text-blue-500" />
+          Appearance
+        </h2>
+        <p className="text-sm text-slate-500 mb-6">
+          Customize your site's theme color and logo.
+        </p>
+
+        <div className="space-y-6">
+          {/* Logo Upload */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Logo</label>
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 rounded-lg border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden bg-slate-50 flex-shrink-0">
+                {settings.logo_url ? (
+                  <img src={settings.logo_url} alt="Logo" className="h-full w-full object-contain p-1" />
+                ) : (
+                  <MapPin className="h-6 w-6 text-slate-300" />
+                )}
+              </div>
+              <div className="flex-1">
+                <label className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
+                  {uploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
+                  <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" disabled={uploadingLogo} />
+                </label>
+                {settings.logo_url && (
+                  <button
+                    type="button"
+                    onClick={() => update('logo_url', '')}
+                    className="mt-2 flex items-center gap-1 text-xs text-red-500 hover:text-red-600"
+                  >
+                    <X className="h-3 w-3" /> Remove logo
+                  </button>
+                )}
+                <p className="text-xs text-slate-400 mt-1">Recommended: 200x50px, PNG or SVG</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Theme Color */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Theme Color</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={settings.theme_color}
+                onChange={(e) => update('theme_color', e.target.value)}
+                className="h-10 w-10 rounded-lg border border-slate-200 cursor-pointer"
+              />
+              <input
+                type="text"
+                value={settings.theme_color}
+                onChange={(e) => update('theme_color', e.target.value)}
+                className="flex-1 px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="#2563eb"
+              />
+            </div>
+            <div className="flex flex-wrap gap-2 mt-3">
+              {presetColors.map((color) => (
+                <button
+                  key={color.value}
+                  type="button"
+                  onClick={() => update('theme_color', color.value)}
+                  className={`w-8 h-8 rounded-full border-2 transition-all ${
+                    settings.theme_color === color.value ? 'border-slate-900 scale-110' : 'border-transparent hover:scale-105'
+                  }`}
+                  style={{ backgroundColor: color.value }}
+                  title={color.name}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Preview */}
+          <div className="p-4 bg-slate-50 rounded-lg">
+            <p className="text-xs font-medium text-slate-600 mb-2">Preview</p>
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: settings.theme_color }}>
+                <MapPin className="h-5 w-5 text-white" />
+              </div>
+              <span className="text-lg font-bold text-slate-900">{settings.company_name || 'Tourister'}</span>
+              <button
+                type="button"
+                className="ml-auto text-white px-4 py-2 rounded-lg text-sm font-medium"
+                style={{ backgroundColor: settings.theme_color }}
+              >
+                Enquire Now
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Email Notifications */}
@@ -305,7 +440,8 @@ export default function AdminSettingsPage() {
         <button
           onClick={handleSave}
           disabled={loading}
-          className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          className="flex items-center gap-2 text-white px-6 py-2.5 rounded-lg font-medium disabled:opacity-50 transition-colors"
+          style={{ backgroundColor: settings.theme_color }}
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
           {loading ? 'Saving...' : saved ? 'Saved!' : 'Save Settings'}
