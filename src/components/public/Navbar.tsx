@@ -35,7 +35,7 @@ export function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center">
             {logo_url ? (
-              <img src={logo_url} alt={company_name} className="h-12 md:h-14 w-auto object-contain" />
+              <img src={logo_url} alt={company_name} className="h-14 md:h-16 w-auto object-contain" />
             ) : (
               <div className="h-9 w-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: theme_color }}>
                 <MapPin className="h-5 w-5 text-white" />

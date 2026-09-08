@@ -49,7 +49,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/" className="flex items-center">
               {logo_url ? (
                 <img src={logo_url} alt={company_name} className="h-12 w-auto object-contain" />
               ) : (
@@ -57,7 +57,6 @@ export function Footer() {
                   <MapPin className="h-5 w-5 text-white" />
                 </div>
               )}
-              <span className="text-xl font-bold" style={{ color: headingColor }}>{company_name}</span>
             </Link>
             <p className="text-sm leading-relaxed" style={{ color: bodyColor }}>
               Creating unforgettable travel experiences with handpicked destinations and personalized service.
