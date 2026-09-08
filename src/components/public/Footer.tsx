@@ -51,7 +51,7 @@ export function Footer() {
           <div className="space-y-4">
             <Link href="/" className="flex items-center">
               {logo_url ? (
-                <img src={logo_url} alt={company_name} className="w-auto object-contain" style={{ height: '48px', minWidth: '120px' }} />
+                <img src={logo_url} alt={company_name} className="w-auto object-contain" style={{ height: '48px', minWidth: '160px' }} />
               ) : (
                 <div className="h-9 w-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: theme_color }}>
                   <MapPin className="h-5 w-5 text-white" />
