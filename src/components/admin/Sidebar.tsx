@@ -73,7 +73,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="px-6 py-5 border-b border-slate-800 flex items-center justify-between">
           <Link href="/admin" className="flex items-center gap-2" onClick={handleNav}>
             {logoUrl ? (
-              <img src={logoUrl} alt={companyName} className="h-8 w-auto object-contain" />
+              <img src={logoUrl} alt={companyName} className="h-10 w-auto object-contain" />
             ) : (
               <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: themeColor }}>
                 <MapPin className="h-4 w-4 text-white" />
