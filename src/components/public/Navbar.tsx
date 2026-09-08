@@ -31,11 +31,11 @@ export function Navbar() {
       }}
     >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between py-3">
           {/* Logo */}
           <Link href="/" className="flex items-center">
             {logo_url ? (
-              <img src={logo_url} alt={company_name} className="max-h-20 w-auto object-contain" />
+              <img src={logo_url} alt={company_name} className="max-h-24 w-auto object-contain" />
             ) : (
               <div className="h-9 w-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: theme_color }}>
                 <MapPin className="h-5 w-5 text-white" />
