@@ -15,13 +15,36 @@ const socialIcons: Record<string, typeof Globe> = {
   share: Share2,
 }
 
+function getContrastColor(hex: string): string {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+  if (!result) return '#64748b'
+  const r = parseInt(result[1], 16)
+  const g = parseInt(result[2], 16)
+  const b = parseInt(result[3], 16)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luminance > 0.5 ? '#64748b' : '#cbd5e1'
+}
+
+function getHeadingColor(hex: string): string {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+  if (!result) return '#1e293b'
+  const r = parseInt(result[1], 16)
+  const g = parseInt(result[2], 16)
+  const b = parseInt(result[3], 16)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luminance > 0.5 ? '#1e293b' : '#f1f5f9'
+}
+
 export function Footer() {
-  const { company_name, company_phone, company_email, theme_color, logo_url, social_links } = useSiteSettings()
+  const { company_name, company_phone, company_email, theme_color, logo_url, footer_bg_color, footer_text_color, social_links } = useSiteSettings()
 
   const activeLinks = social_links.filter(l => l.url)
+  const headingColor = getHeadingColor(footer_bg_color)
+  const bodyColor = footer_text_color || getContrastColor(footer_bg_color)
+  const isDarkBg = getContrastColor(footer_bg_color) === '#cbd5e1'
 
   return (
-    <footer className="bg-white border-t border-slate-200">
+    <footer style={{ backgroundColor: footer_bg_color }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
@@ -34,32 +57,32 @@ export function Footer() {
                   <MapPin className="h-5 w-5 text-white" />
                 </div>
               )}
-              <span className="text-xl font-bold text-slate-900">{company_name}</span>
+              <span className="text-xl font-bold" style={{ color: headingColor }}>{company_name}</span>
             </Link>
-            <p className="text-sm text-slate-500 leading-relaxed">
+            <p className="text-sm leading-relaxed" style={{ color: bodyColor }}>
               Creating unforgettable travel experiences with handpicked destinations and personalized service.
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-slate-900 font-semibold mb-4">Quick Links</h4>
+            <h4 className="font-semibold mb-4" style={{ color: headingColor }}>Quick Links</h4>
             <ul className="space-y-2">
-              <li><Link href="/" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">Home</Link></li>
-              <li><Link href="/packages" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">All Packages</Link></li>
-              <li><Link href="/enquiry" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">Send Enquiry</Link></li>
+              <li><Link href="/" className="text-sm hover:opacity-70 transition-colors" style={{ color: bodyColor }}>Home</Link></li>
+              <li><Link href="/packages" className="text-sm hover:opacity-70 transition-colors" style={{ color: bodyColor }}>All Packages</Link></li>
+              <li><Link href="/enquiry" className="text-sm hover:opacity-70 transition-colors" style={{ color: bodyColor }}>Send Enquiry</Link></li>
             </ul>
           </div>
 
           {/* Contact */}
           <div>
-            <h4 className="text-slate-900 font-semibold mb-4">Contact Us</h4>
+            <h4 className="font-semibold mb-4" style={{ color: headingColor }}>Contact Us</h4>
             <ul className="space-y-3">
-              <li className="flex items-center gap-2 text-sm text-slate-500">
+              <li className="flex items-center gap-2 text-sm" style={{ color: bodyColor }}>
                 <Phone className="h-4 w-4" style={{ color: theme_color }} />
                 {company_phone}
               </li>
-              <li className="flex items-center gap-2 text-sm text-slate-500">
+              <li className="flex items-center gap-2 text-sm" style={{ color: bodyColor }}>
                 <Mail className="h-4 w-4" style={{ color: theme_color }} />
                 {company_email}
               </li>
@@ -68,7 +91,7 @@ export function Footer() {
 
           {/* Social */}
           <div>
-            <h4 className="text-slate-900 font-semibold mb-4">Follow Us</h4>
+            <h4 className="font-semibold mb-4" style={{ color: headingColor }}>Follow Us</h4>
             {activeLinks.length > 0 ? (
               <div className="flex gap-3">
                 {activeLinks.map((link, i) => {
@@ -89,12 +112,12 @@ export function Footer() {
                 })}
               </div>
             ) : (
-              <p className="text-sm text-slate-400">No social links configured</p>
+              <p className="text-sm" style={{ color: bodyColor }}>No social links configured</p>
             )}
           </div>
         </div>
 
-        <div className="border-t border-slate-200 mt-10 pt-6 text-center text-sm text-slate-500">
+        <div className="mt-10 pt-6 text-center text-sm" style={{ borderTop: `1px solid ${isDarkBg ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`, color: bodyColor }}>
           &copy; {new Date().getFullYear()} {company_name}. All rights reserved.
         </div>
       </div>

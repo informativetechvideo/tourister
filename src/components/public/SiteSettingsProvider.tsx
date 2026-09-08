@@ -15,6 +15,10 @@ interface SiteSettings {
   company_email: string
   theme_color: string
   logo_url: string
+  header_bg_color: string
+  header_text_color: string
+  footer_bg_color: string
+  footer_text_color: string
   social_links: SocialLink[]
   categories: { name: string; slug: string }[]
 }
@@ -25,6 +29,10 @@ const SettingsContext = createContext<SiteSettings>({
   company_email: 'info@tourister.com',
   theme_color: '#2563eb',
   logo_url: '',
+  header_bg_color: '#ffffff',
+  header_text_color: '#475569',
+  footer_bg_color: '#ffffff',
+  footer_text_color: '#64748b',
   social_links: [],
   categories: [],
 })
@@ -73,7 +81,11 @@ export function SiteSettingsProvider({ children, initial }: { children: ReactNod
     root.style.setProperty('--theme-color', settings.theme_color)
     root.style.setProperty('--theme-hsl', hexToHSL(settings.theme_color))
     root.style.setProperty('--theme-rgb', hexToRGB(settings.theme_color))
-  }, [settings.theme_color])
+    root.style.setProperty('--header-bg', settings.header_bg_color)
+    root.style.setProperty('--header-text', settings.header_text_color)
+    root.style.setProperty('--footer-bg', settings.footer_bg_color)
+    root.style.setProperty('--footer-text', settings.footer_text_color)
+  }, [settings.theme_color, settings.header_bg_color, settings.header_text_color, settings.footer_bg_color, settings.footer_text_color])
 
   useEffect(() => {
     const supabase = createClient()
@@ -92,6 +104,10 @@ export function SiteSettingsProvider({ children, initial }: { children: ReactNod
           company_email: s.company_email || prev.company_email,
           theme_color: s.theme_color || prev.theme_color,
           logo_url: s.logo_url || prev.logo_url,
+          header_bg_color: s.header_bg_color || prev.header_bg_color,
+          header_text_color: s.header_text_color || prev.header_text_color,
+          footer_bg_color: s.footer_bg_color || prev.footer_bg_color,
+          footer_text_color: s.footer_text_color || prev.footer_text_color,
           social_links: socialLinks,
         }))
       }

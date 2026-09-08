@@ -29,6 +29,10 @@ export default function AdminSettingsPage() {
     smtp_from_name: 'Tourister',
     theme_color: '#2563eb',
     logo_url: '',
+    header_bg_color: '#ffffff',
+    header_text_color: '#475569',
+    footer_bg_color: '#ffffff',
+    footer_text_color: '#64748b',
   })
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([
     { label: 'Facebook', url: '', icon: 'facebook' },
@@ -58,6 +62,10 @@ export default function AdminSettingsPage() {
           smtp_from_name: s.smtp_from_name || 'Tourister',
           theme_color: s.theme_color || '#2563eb',
           logo_url: s.logo_url || '',
+          header_bg_color: s.header_bg_color || '#ffffff',
+          header_text_color: s.header_text_color || '#475569',
+          footer_bg_color: s.footer_bg_color || '#ffffff',
+          footer_text_color: s.footer_text_color || '#64748b',
         }))
         if (s.social_links) {
           try { setSocialLinks(JSON.parse(s.social_links)) } catch {}
@@ -246,21 +254,95 @@ export default function AdminSettingsPage() {
             </div>
           </div>
 
-          {/* Preview */}
-          <div className="p-4 bg-slate-50 rounded-lg">
-            <p className="text-xs font-medium text-slate-600 mb-2">Preview</p>
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: settings.theme_color }}>
-                <MapPin className="h-5 w-5 text-white" />
+          {/* Header Colors */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Header Background</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={settings.header_bg_color}
+                  onChange={(e) => update('header_bg_color', e.target.value)}
+                  className="h-10 w-10 rounded-lg border border-slate-200 cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={settings.header_bg_color}
+                  onChange={(e) => update('header_bg_color', e.target.value)}
+                  className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
-              <span className="text-lg font-bold text-slate-900">{settings.company_name || 'Tourister'}</span>
-              <button
-                type="button"
-                className="ml-auto text-white px-4 py-2 rounded-lg text-sm font-medium"
-                style={{ backgroundColor: settings.theme_color }}
-              >
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Header Text</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={settings.header_text_color}
+                  onChange={(e) => update('header_text_color', e.target.value)}
+                  className="h-10 w-10 rounded-lg border border-slate-200 cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={settings.header_text_color}
+                  onChange={(e) => update('header_text_color', e.target.value)}
+                  className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Footer Colors */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Footer Background</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={settings.footer_bg_color}
+                  onChange={(e) => update('footer_bg_color', e.target.value)}
+                  className="h-10 w-10 rounded-lg border border-slate-200 cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={settings.footer_bg_color}
+                  onChange={(e) => update('footer_bg_color', e.target.value)}
+                  className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Footer Text</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={settings.footer_text_color}
+                  onChange={(e) => update('footer_text_color', e.target.value)}
+                  className="h-10 w-10 rounded-lg border border-slate-200 cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={settings.footer_text_color}
+                  onChange={(e) => update('footer_text_color', e.target.value)}
+                  className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Preview */}
+          <div className="rounded-lg overflow-hidden border border-slate-200">
+            <div className="p-3 flex items-center gap-3" style={{ backgroundColor: settings.header_bg_color }}>
+              <div className="h-6 w-6 rounded flex items-center justify-center" style={{ backgroundColor: settings.theme_color }}>
+                <MapPin className="h-3.5 w-3.5 text-white" />
+              </div>
+              <span className="text-sm font-bold" style={{ color: settings.header_text_color }}>{settings.company_name || 'Tourister'}</span>
+              <button type="button" className="ml-auto text-white px-3 py-1 rounded text-xs font-medium" style={{ backgroundColor: settings.theme_color }}>
                 Enquire Now
               </button>
+            </div>
+            <div className="p-3 text-center text-xs" style={{ backgroundColor: settings.footer_bg_color, color: settings.footer_text_color }}>
+              &copy; 2026 {settings.company_name || 'Tourister'}. All rights reserved.
             </div>
           </div>
         </div>

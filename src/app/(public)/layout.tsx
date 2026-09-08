@@ -28,6 +28,10 @@ export default async function PublicLayout({ children }: { children: React.React
     company_email: s.company_email || 'info@tourister.com',
     theme_color: s.theme_color || '#2563eb',
     logo_url: s.logo_url || '',
+    header_bg_color: s.header_bg_color || '#ffffff',
+    header_text_color: s.header_text_color || '#475569',
+    footer_bg_color: s.footer_bg_color || '#ffffff',
+    footer_text_color: s.footer_text_color || '#64748b',
     social_links: socialLinks,
     categories: categoriesRes.data || [],
   }
