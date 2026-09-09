@@ -1,17 +1,22 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { formatDate, formatPrice } from '@/lib/utils'
-import { Plus, Pencil, Star, MapPin, Clock, Eye, Loader2 } from 'lucide-react'
+import { Plus, Pencil, Star, MapPin, Clock, Eye, Loader2, Download, Upload, FileDown, FileUp, X } from 'lucide-react'
 import { ToggleActiveButton } from './ToggleActiveButton'
 import { DeletePackageButton } from './DeletePackageButton'
 
 export function AdminPackagesList() {
   const [packages, setPackages] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [exporting, setExporting] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState<{ success: number; failed: number; errors: string[] } | null>(null)
+  const [showImportModal, setShowImportModal] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchData = async () => {
     const supabase = createClient()
@@ -24,6 +29,50 @@ export function AdminPackagesList() {
   }
 
   useEffect(() => { fetchData() }, [])
+
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const res = await fetch('/api/packages/export')
+      if (!res.ok) throw new Error('Export failed')
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `packages-${new Date().toISOString().slice(0, 10)}.csv`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      alert('Failed to export packages')
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setImporting(true)
+    setImportResult(null)
+    setShowImportModal(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/packages/import', { method: 'POST', body: formData })
+      const data = await res.json()
+      setImportResult(data)
+      if (data.success > 0) fetchData()
+    } catch (err) {
+      setImportResult({ success: 0, failed: 1, errors: ['Import failed. Please check your CSV format.'] })
+    } finally {
+      setImporting(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
 
   if (loading) {
     return (
@@ -40,12 +89,58 @@ export function AdminPackagesList() {
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Packages</h1>
           <p className="text-slate-500 text-sm mt-1">{packages.length} total packages</p>
         </div>
-        <Link href="/admin/packages/new">
-          <Button size="sm">
-            <Plus className="h-4 w-4 mr-1.5" /> <span className="hidden sm:inline">New Package</span><span className="sm:hidden">New</span>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting || packages.length === 0}>
+            {exporting ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Download className="h-4 w-4 mr-1.5" />}
+            <span className="hidden sm:inline">Export CSV</span><span className="sm:hidden">Export</span>
           </Button>
-        </Link>
+          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+            {importing ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Upload className="h-4 w-4 mr-1.5" />}
+            <span className="hidden sm:inline">Import CSV</span><span className="sm:hidden">Import</span>
+          </Button>
+          <input ref={fileInputRef} type="file" accept=".csv" className="hidden" onChange={handleImport} />
+          <Link href="/admin/packages/new">
+            <Button size="sm">
+              <Plus className="h-4 w-4 mr-1.5" /> <span className="hidden sm:inline">New Package</span><span className="sm:hidden">New</span>
+            </Button>
+          </Link>
+        </div>
       </div>
+
+      {/* Import Result Modal */}
+      {showImportModal && importResult && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-900">Import Results</h3>
+              <button onClick={() => { setShowImportModal(false); setImportResult(null) }} className="p-1 hover:bg-slate-100 rounded-lg">
+                <X className="h-5 w-5 text-slate-500" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div className="flex gap-4">
+                <div className="flex-1 bg-green-50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-green-600">{importResult.success}</p>
+                  <p className="text-xs text-green-600">Imported</p>
+                </div>
+                <div className="flex-1 bg-red-50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-red-600">{importResult.failed}</p>
+                  <p className="text-xs text-red-600">Failed</p>
+                </div>
+              </div>
+              {importResult.errors.length > 0 && (
+                <div className="max-h-40 overflow-y-auto">
+                  <p className="text-xs font-medium text-slate-600 mb-1">Errors:</p>
+                  {importResult.errors.map((err, i) => (
+                    <p key={i} className="text-xs text-red-600">{err}</p>
+                  ))}
+                </div>
+              )}
+              <Button onClick={() => { setShowImportModal(false); setImportResult(null) }} className="w-full">Close</Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile: Card Layout */}
       <div className="lg:hidden space-y-3">
@@ -173,7 +268,7 @@ export function AdminPackagesList() {
 
       {packages.length === 0 && (
         <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-sm text-slate-400">
-          No packages yet. Create your first package!
+          No packages yet. Create your first package or import from CSV!
         </div>
       )}
     </div>
