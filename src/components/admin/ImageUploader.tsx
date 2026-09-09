@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { uploadImage } from '@/app/actions/storage'
-import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { Upload, X, Loader2 } from 'lucide-react'
 
 interface ImageUploaderProps {
   images: string[]
@@ -21,11 +21,27 @@ export function ImageUploader({ images, onChange, folder = 'packages', maxImages
 
     setUploading(true)
     try {
+      const supabase = createClient()
       const newUrls: string[] = []
+
       for (let i = 0; i < files.length && images.length + newUrls.length < maxImages; i++) {
-        const url = await uploadImage(files[i], folder)
-        newUrls.push(url)
+        const file = files[i]
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`
+
+        const { data, error } = await supabase.storage
+          .from('package-images')
+          .upload(fileName, file, { cacheControl: '3600', upsert: false })
+
+        if (error) throw new Error(error.message)
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('package-images')
+          .getPublicUrl(data.path)
+
+        newUrls.push(publicUrl)
       }
+
       onChange([...images, ...newUrls])
     } catch (err) {
       alert('Upload failed. Please try again.')
