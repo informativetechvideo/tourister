@@ -5,12 +5,60 @@ import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { formatDate, formatPrice } from '@/lib/utils'
-import { Plus, Pencil, Star, MapPin, Clock, Eye, Loader2, Download, Upload, FileDown, FileUp, X } from 'lucide-react'
+import { Plus, Pencil, Star, MapPin, Clock, Eye, Loader2, Download, Upload, X } from 'lucide-react'
 import { ToggleActiveButton } from './ToggleActiveButton'
 import { DeletePackageButton } from './DeletePackageButton'
 
+function escapeCSV(val: any): string {
+  if (val === null || val === undefined) return ''
+  const str = String(val)
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return `"${str.replace(/"/g, '""')}"`
+  }
+  return str
+}
+
+function jsonToArray(val: any): string {
+  if (!val) return ''
+  if (Array.isArray(val)) {
+    return val.map(v => typeof v === 'object' ? JSON.stringify(v) : String(v)).join('; ')
+  }
+  return String(val)
+}
+
+function generateSlug(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+}
+
+function parseCSVLine(line: string): string[] {
+  const result: string[] = []
+  let current = ''
+  let inQuotes = false
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i]
+    if (inQuotes) {
+      if (char === '"') {
+        if (i + 1 < line.length && line[i + 1] === '"') { current += '"'; i++ }
+        else inQuotes = false
+      } else { current += char }
+    } else {
+      if (char === '"') inQuotes = true
+      else if (char === ',') { result.push(current.trim()); current = '' }
+      else current += char
+    }
+  }
+  result.push(current.trim())
+  return result
+}
+
+function parseArrayField(val: string): any[] {
+  if (!val) return []
+  return val.split(';').map(v => v.trim()).filter(Boolean)
+}
+
 export function AdminPackagesList() {
   const [packages, setPackages] = useState<any[]>([])
+  const [categories, setCategories] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)
@@ -20,11 +68,12 @@ export function AdminPackagesList() {
 
   const fetchData = async () => {
     const supabase = createClient()
-    const { data } = await supabase
-      .from('packages')
-      .select('*, categories(*)')
-      .order('created_at', { ascending: false })
-    setPackages(data || [])
+    const [pkgRes, catRes] = await Promise.all([
+      supabase.from('packages').select('*, categories(*)').order('created_at', { ascending: false }),
+      supabase.from('categories').select('id, name'),
+    ])
+    setPackages(pkgRes.data || [])
+    setCategories(catRes.data || [])
     setLoading(false)
   }
 
@@ -33,9 +82,33 @@ export function AdminPackagesList() {
   const handleExport = async () => {
     setExporting(true)
     try {
-      const res = await fetch('/api/packages/export')
-      if (!res.ok) throw new Error('Export failed')
-      const blob = await res.blob()
+      const catMap = new Map(categories.map(c => [c.id, c.name]))
+      const headers = [
+        'name', 'short_description', 'full_description', 'price', 'discount_price',
+        'duration_days', 'duration_nights', 'destination', 'country', 'category',
+        'highlights', 'inclusions', 'exclusions', 'images', 'featured', 'is_active'
+      ]
+      const rows = packages.map(pkg => [
+        escapeCSV(pkg.name),
+        escapeCSV(pkg.short_description),
+        escapeCSV(pkg.full_description),
+        pkg.price,
+        pkg.discount_price || '',
+        pkg.duration_days,
+        pkg.duration_nights || '',
+        escapeCSV(pkg.destination),
+        escapeCSV(pkg.country),
+        escapeCSV(catMap.get(pkg.category_id) || ''),
+        escapeCSV(jsonToArray(pkg.highlights)),
+        escapeCSV(jsonToArray(pkg.inclusions)),
+        escapeCSV(jsonToArray(pkg.exclusions)),
+        escapeCSV(jsonToArray(pkg.images)),
+        pkg.featured ? 'true' : 'false',
+        pkg.is_active ? 'true' : 'false',
+      ].join(','))
+
+      const csv = [headers.join(','), ...rows].join('\n')
+      const blob = new Blob([csv], { type: 'text/csv' })
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -60,14 +133,76 @@ export function AdminPackagesList() {
     setShowImportModal(true)
 
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      const res = await fetch('/api/packages/import', { method: 'POST', body: formData })
-      const data = await res.json()
-      setImportResult(data)
-      if (data.success > 0) fetchData()
+      const text = await file.text()
+      const lines = text.split('\n').filter(l => l.trim())
+      if (lines.length < 2) {
+        setImportResult({ success: 0, failed: 1, errors: ['CSV file is empty or has no data rows'] })
+        setImporting(false)
+        return
+      }
+
+      const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().replace(/\s+/g, '_'))
+      const catNameToId = new Map(categories.map(c => [c.name.toLowerCase(), c.id]))
+      let success = 0
+      let failed = 0
+      const errors: string[] = []
+
+      const supabase = createClient()
+
+      for (let i = 1; i < lines.length; i++) {
+        try {
+          const values = parseCSVLine(lines[i])
+          const row: Record<string, string> = {}
+          headers.forEach((h, idx) => { row[h] = values[idx] || '' })
+
+          if (!row.name) { failed++; errors.push(`Row ${i + 1}: Missing name`); continue }
+
+          const catName = (row.category || '').toLowerCase()
+          let categoryId = catNameToId.get(catName) || null
+
+          if (catName && !categoryId) {
+            const slug = generateSlug(catName)
+            const { data: newCat } = await supabase
+              .from('categories')
+              .insert({ name: catName.charAt(0).toUpperCase() + catName.slice(1), slug, is_active: true })
+              .select('id')
+              .single()
+            if (newCat) { categoryId = newCat.id; catNameToId.set(catName, newCat.id) }
+          }
+
+          const pkgData = {
+            name: row.name,
+            slug: generateSlug(row.name),
+            short_description: row.short_description || '',
+            full_description: row.full_description || '',
+            price: parseFloat(row.price) || 0,
+            discount_price: row.discount_price ? parseFloat(row.discount_price) : null,
+            duration_days: parseInt(row.duration_days) || 1,
+            duration_nights: row.duration_nights ? parseInt(row.duration_nights) : null,
+            destination: row.destination || '',
+            country: row.country || '',
+            category_id: categoryId,
+            highlights: parseArrayField(row.highlights),
+            inclusions: parseArrayField(row.inclusions),
+            exclusions: parseArrayField(row.exclusions),
+            images: parseArrayField(row.images),
+            featured: row.featured === 'true',
+            is_active: row.is_active !== 'false',
+          }
+
+          const { error } = await supabase.from('packages').insert(pkgData)
+          if (error) { failed++; errors.push(`Row ${i + 1} (${row.name}): ${error.message}`) }
+          else success++
+        } catch (err: any) {
+          failed++
+          errors.push(`Row ${i + 1}: ${err.message}`)
+        }
+      }
+
+      setImportResult({ success, failed, errors })
+      if (success > 0) fetchData()
     } catch (err) {
-      setImportResult({ success: 0, failed: 1, errors: ['Import failed. Please check your CSV format.'] })
+      setImportResult({ success: 0, failed: 1, errors: ['Failed to parse CSV file'] })
     } finally {
       setImporting(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -245,7 +380,7 @@ export function AdminPackagesList() {
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-600">{pkg.duration_days}D / {pkg.duration_nights || pkg.duration_days - 1}N</td>
                   <td className="px-4 py-3">
-                  <ToggleActiveButton id={pkg.id} isActive={pkg.is_active} onToggle={fetchData} />
+                    <ToggleActiveButton id={pkg.id} isActive={pkg.is_active} onToggle={fetchData} />
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-500">{formatDate(pkg.created_at)}</td>
                   <td className="px-4 py-3 text-right">
