@@ -6,7 +6,6 @@ import { StatsCounter } from '@/components/public/StatsCounter'
 import { PackageGrid } from '@/components/public/PackageGrid'
 import { DestinationShowcase } from '@/components/public/DestinationShowcase'
 import { HowItWorks } from '@/components/public/HowItWorks'
-import { Testimonials } from '@/components/public/Testimonials'
 import { CTABanner } from '@/components/public/CTABanner'
 import { CategoryCard } from '@/components/public/CategoryCard'
 import { Shield, Headphones, MapPin, Award } from 'lucide-react'
@@ -104,8 +103,6 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-
-      <Testimonials />
 
       <CTABanner />
 
