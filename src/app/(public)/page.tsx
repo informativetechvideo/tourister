@@ -4,7 +4,6 @@ import { Footer } from '@/components/public/Footer'
 import { HeroCarousel } from '@/components/public/HeroCarousel'
 import { StatsCounter } from '@/components/public/StatsCounter'
 import { PackageGrid } from '@/components/public/PackageGrid'
-import { DestinationShowcase } from '@/components/public/DestinationShowcase'
 import { HowItWorks } from '@/components/public/HowItWorks'
 import { CTABanner } from '@/components/public/CTABanner'
 import { CategoryCard } from '@/components/public/CategoryCard'
@@ -55,8 +54,6 @@ export default async function HomePage() {
           </div>
         </section>
       )}
-
-      <DestinationShowcase />
 
       {/* Categories */}
       {categories && categories.length > 0 && (
