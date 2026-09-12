@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { Navbar } from '@/components/public/Navbar'
 import { Footer } from '@/components/public/Footer'
 import { HeroCarousel } from '@/components/public/HeroCarousel'
-import { StatsCounter } from '@/components/public/StatsCounter'
 import { PackageGrid } from '@/components/public/PackageGrid'
 import { HowItWorks } from '@/components/public/HowItWorks'
 import { CTABanner } from '@/components/public/CTABanner'
@@ -33,8 +32,6 @@ export default async function HomePage() {
       <Navbar />
 
       <HeroCarousel />
-
-      <StatsCounter />
 
       {/* Packages */}
       {packages && packages.length > 0 && (
